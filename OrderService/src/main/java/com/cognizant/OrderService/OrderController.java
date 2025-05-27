@@ -21,7 +21,7 @@ public class OrderController {
     @PostMapping
     @CircuitBreaker(name = "orderService", fallbackMethod = "fallbackAddOrder")
     public ResponseEntity<?> addOrder(@RequestBody Request request) {
-        Map<Integer, Integer> newSotck = new HashMap<>();
+        Map<Integer, Integer> newStock = new HashMap<>();
         List<Item> items = new ArrayList<>();
         //Check every product is available:
         for (Integer itemId : request.getItems().keySet()) {
@@ -36,13 +36,13 @@ public class OrderController {
                     return ResponseEntity.badRequest().body("Insufficient stock for item " + itemId + ".");
                 }
             }
-            newSotck.put(itemId, productStock - quantity);
+            newStock.put(itemId, productStock - quantity);
         }
         //Update product stock:
-        for (Integer itemId : newSotck.keySet()) {
-            restTemp.put("http://localhost:8081/products/" + itemId + "?stock=" + newSotck.get(itemId), Product.class);
+        for (Integer itemId : newStock.keySet()) {
+            restTemp.put("http://localhost:8081/products/" + itemId + "?stock=" + newStock.get(itemId), Product.class);
         }
-        //Create order:
+        //Add order:
         for (Integer itemId : request.getItems().keySet()) {
             Item item = new Item(
                     itemId,
@@ -56,11 +56,7 @@ public class OrderController {
             request.getTotal(),
             items
         );
-
-        //Add order items:
         ps.addOrder(order);
-
-        //ps.addItems(savedOrder.getId(), items);
         return ResponseEntity.ok().build();
     }
 
